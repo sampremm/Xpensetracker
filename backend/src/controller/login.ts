@@ -25,11 +25,15 @@ export const login = async (req: Request, res: Response) => {
         if (!isPasswordValid) {
             return res.status(401).json({ message: "Invalid credentials" });
         }
-        const jwtSecret = process.env.screateKey;
+        const jwtSecret = process.env.JWT_SECRET;
         if (!jwtSecret) {
             return res.status(500).json({ message: "JWT secret key not configured" });
         }
-        const token = jwt.sign({ email: user.email }, jwtSecret);
+        const token = jwt.sign(
+          { id: user.id, email: user.email },
+          jwtSecret,
+          { expiresIn: "24h" }
+        );
         res.cookie("token", token, {
         httpOnly: true,       // cannot be accessed via JS
         secure: process.env.NODE_ENV === "production", // HTTPS only in prod
@@ -37,10 +41,9 @@ export const login = async (req: Request, res: Response) => {
         maxAge: 24 * 60 * 60 * 1000, // 24h
   })
   .json({ message: "User created", token });
-
     } catch (error) {
         console.error(error);
         return res.status(500).json({ message: "Internal server error" });
     }
 }
-    
+

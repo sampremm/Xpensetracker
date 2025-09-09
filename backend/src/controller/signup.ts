@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import prisma from "../Db/db";
 import bcrypt from "bcrypt";
 import { z } from "zod";
+import { c } from "framer-motion/dist/types.d-Bq-Qm38R";
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -30,13 +31,13 @@ export const signup = async (req: Request, res: Response) => {
 
     const newUser = await prisma.user.create({
       data: {
-        username: validate.data.name,
+        name: validate.data.name,
         email: validate.data.email,
         password: hashedPassword,
       }
     });
 
-    const jwtSecret = process.env.screateKey;
+    const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       return res.status(500).json({ message: "JWT secret key not configured" });
     }
@@ -56,5 +57,6 @@ export const signup = async (req: Request, res: Response) => {
 
   } catch (err) {
     res.status(500).json({ message: "Internal Server Error", error: err });
+    console.log(err);
   }
 };

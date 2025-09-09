@@ -1,19 +1,32 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 
-export const authenticate = (req: Request, res: Response, next: NextFunction) => {
-  const token = req.cookies?.token; // read JWT from cookie
+interface JwtPayload {
+  id: number;
+  email: string;
+}
 
-  if (!token) return res.status(401).json({ message: "No token provided" });
+export const authMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  let token: string | undefined;
 
-  const jwtSecret = process.env.screateKey;
-  if (!jwtSecret) return res.status(500).json({ message: "JWT secret key not configured" });
+  // Try Authorization header first
+  if (req.headers.authorization?.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
+  // Fallback to cookie
+  else if (req.cookies?.token) {
+    token = req.cookies.token;
+  }
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
 
   try {
-    const decoded = jwt.verify(token, jwtSecret) as { id: number; email: string };
-    (req as any).user = decoded; // attach user info to request
+    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+    (req as any).user = decoded;
     next();
-  } catch {
-    res.status(401).json({ message: "Invalid token" });
+  } catch (err) {
+    return res.status(401).json({ message: "Invalid token", error: err });
   }
 };
