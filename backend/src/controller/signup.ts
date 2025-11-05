@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 import prisma from "../Db/db";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-import { c } from "framer-motion/dist/types.d-Bq-Qm38R";
 
 export const signupSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
