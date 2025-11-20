@@ -1,25 +1,47 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
-model Expense {
-  id     Int    @id @default(autoincrement())
-  title  String
-  amount Float 
-  user   User   @relation(fields: [userId], references: [id])
-  userId Int
-}
-
 
 model User {
-  id       Int       @id @default(autoincrement())
-  name     String    @default("Anonymous")  // ✅ safe default
-  email    String    @unique
-  password String
-  expenses Expense[]
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  password      String
+  currency      String?        @default("INR")
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  expenses      Expense[]
+  refreshTokens RefreshToken[]
+}
+
+model Expense {
+  id        Int         @id @default(autoincrement())
+  title     String
+  amount    Float
+  type      ExpenseType
+  category  String
+  note      String?
+  date      DateTime    @default(now())
+  userId    Int
+  user      User        @relation(fields: [userId], references: [id])
+  createdAt DateTime    @default(now())
+}
+
+enum ExpenseType {
+  INCOME
+  EXPENSE
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
 }
