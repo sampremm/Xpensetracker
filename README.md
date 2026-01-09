@@ -1,103 +1,62 @@
 # Xpensetracker
 
-This repository contains a full-stack Expense Tracker application. The backend is a Node.js + TypeScript API using Prisma for database access. The frontend is a React/Expo-based app (in the `Frontend/` folder).
+This repository contains a full-stack Expense Tracker app.
 
-This README focuses on the backend located in the `backend/` folder and explains how to set it up and run locally.
+- Backend: a Node.js + TypeScript API using Prisma (folder: `backend/`).
+- Frontend: an Expo React Native app (folder: `my-expo-app/`).
 
-## Backend — overview
+This README gives a concise overview and quick setup steps for both backend and frontend.
 
-- Location: `backend/`
-- Language: TypeScript (source in `backend/src/`) with a compiled/runtime entry at `backend/index.js`.
-- Database: Prisma (schema in `backend/prisma/schema.prisma`, migrations in `backend/prisma/migrations/`).
-- Main responsibilities: user signup/login/logout and expense CRUD endpoints (see `backend/src/controller/`).
+**Repository layout**
 
-Key backend files
-- `backend/index.js` — runtime entrypoint for the backend server.
-- `backend/src/index.ts` — TypeScript server bootstrap (source).
-- `backend/src/controller/` — controllers for `expense`, `signup`, `login`, `logout`.
-- `backend/src/middleware/auth.ts` — authentication middleware.
-- `backend/src/Db/db.ts` — Prisma client initialization.
-- `backend/prisma/schema.prisma` — Prisma schema and models.
+- `backend/` — TypeScript API, Prisma schema, and migrations.
+- `my-expo-app/` — Expo React Native frontend (App.tsx, screens, navigation).
 
-## Prerequisites
+**Backend (quickstart)**
 
-- Node.js (recommended v16+) and npm installed.
-- Git (optional, to clone repository).
-- A database compatible with Prisma (the project expects a `DATABASE_URL` defined in `.env`).
-
-Check or create a `.env` file in `backend/` with at least:
-
-```
-DATABASE_URL="your-database-connection-string"
-# (Optional) PORT=4000
-# (Optional) JWT_SECRET=your_jwt_secret
-```
-
-Note: The exact environment variable names and values are in the project `.env` (if present) — verify before running.
-
-## Setup (local development)
-
-1. Open a terminal and change into the backend directory:
+1. Change into the backend folder and install dependencies:
 
 ```bash
 cd backend
-```
-
-2. Install dependencies:
-
-```bash
 npm install
 ```
 
-3. Generate Prisma client (required if dependencies or schema changed):
+2. Configure `.env` in `backend/` with at minimum:
+
+```
+DATABASE_URL="your-database-connection-string"
+JWT_SECRET="your_jwt_secret"
+# Optional: PORT=4000
+```
+
+3. Generate Prisma client and apply migrations for development:
 
 ```bash
 npx prisma generate
-```
-
-4. Run database migrations (choose one depending on whether you are developing or deploying):
-
-# For local development creating/previewing new migrations
 npx prisma migrate dev --name init
+```
 
-# For applying migrations in a deployed environment
-npx prisma migrate deploy
+4. Start the server (or use scripts in `backend/package.json`):
 
-5. Run the server:
-
-# If you want to run the bundled JS
+```bash
 node index.js
-
-# If you prefer to run the TypeScript source directly (requires ts-node / ts-node-dev)
-# Example (if project has a dev script or ts-node installed):
-# npx ts-node-dev src/index.ts
-
-Note: The repository contains a pre-built `index.js` in `backend/`, so `node index.js` should start the server unless your package.json uses different scripts. If you prefer, run the script defined in `backend/package.json` (for example `npm run dev`).
-
-## Useful Prisma commands
-
-- Open Prisma Studio (visual DB browser):
-
-```
-npx prisma studio
+# or
+npm run dev
 ```
 
-- Introspect an existing database
+**Prisma helpers**
 
-```
-npx prisma db pull
-```
+- Open Prisma Studio: `npx prisma studio`
+- Introspect DB: `npx prisma db pull`
 
-## API endpoints (high-level)
+**Backend API (high-level)**
 
-The backend controllers indicate the following core endpoints (confirm exact paths in `backend/src/routes/router.ts`):
+- `POST /signup` — register a user
+- `POST /login` — authenticate
+- `POST /logout` — end session / invalidate token
+- `/expenses` — CRUD endpoints for expenses
 
-- POST /signup — register a new user (controller: `signup.ts`)
-- POST /login — authenticate (controller: `login.ts`)
-- POST /logout — end session / invalidate token (controller: `logout.ts`)
-- /expenses — expense-related endpoints (controller: `expense.ts`) — create, read, update, delete operations
-
-Example curl (signup):
+Example curl for signup:
 
 ```bash
 curl -X POST http://localhost:4000/signup \
@@ -105,37 +64,38 @@ curl -X POST http://localhost:4000/signup \
   -d '{"email":"alice@example.com","password":"securepass"}'
 ```
 
-Example curl (login):
+Adjust host/port according to your `PORT` setting or `backend/package.json` scripts.
+
+**Frontend (quickstart)**
+
+1. Change into the Expo app folder and install dependencies:
 
 ```bash
-curl -X POST http://localhost:4000/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"alice@example.com","password":"securepass"}'
+cd my-expo-app
+npm install
 ```
 
-Adjust the port and body to the actual server configuration and expected payload.
+2. Start the Expo development server:
 
-## Notes, assumptions, and verification
+```bash
+npm start
+# or
+expo start
+```
 
-- This README was generated from the backend folder layout and common conventions. I assumed the server listens on a `PORT` and uses a `DATABASE_URL` in `.env`. If different environment variable names are used, prefer the ones defined in the repository's `.env` or `package.json` scripts.
-- If the project uses custom npm scripts (for example `npm run dev`), use those instead of the raw `node` or `ts-node` commands above. Check `backend/package.json` for exact script names.
+3. Run on device or emulator via Expo DevTools.
 
-## Troubleshooting
+The frontend communicates with the backend API — ensure the backend server is reachable from your device (use local IP or tunneling when testing on a phone).
 
-- If Prisma complains about the migrations or client, re-run `npx prisma generate` and ensure `DATABASE_URL` is valid.
-- If `node index.js` fails with missing modules, run `npm install` inside `backend/` and re-run.
-- If you need the TypeScript dev flow and `ts-node-dev` is not installed, either install it locally or run the compiled `index.js`.
+**Troubleshooting**
 
-## Next steps (optional improvements)
+- If Prisma errors appear, re-run `npx prisma generate` and verify `DATABASE_URL`.
+- If the frontend cannot reach the backend, check network configuration and use a reachable host/IP.
 
-- Add `backend/.env.example` with required variables and brief descriptions.
-- Add a small `Makefile` or npm scripts for common tasks (setup, migrate, dev, start).
-- Add a Postman collection or OpenAPI spec for the API endpoints.
+**Next steps / suggestions**
 
-## Contributing
+- Add `backend/.env.example` for required variables.
+- Add `backend/README.md` with more detailed backend docs (I can create this on request).
+- Add a Postman or OpenAPI spec for the API.
 
-If you want me to: add `.env.example`, wire up a `npm run dev` script with `ts-node-dev`, or create a Postman collection / API docs — tell me which and I'll implement it.
-
----
-
-If you'd like, I can also generate a short `backend/README.md` inside the `backend/` folder with the same content but scoped to the backend only.
+If you want, I can also create a focused `backend/README.md` and add a `.env.example` file — tell me which and I'll implement it.
