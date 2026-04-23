@@ -12,6 +12,20 @@ const createSchema = z.object({
   date: z.string().optional()
 });
 
+// Schema for SMS parsed data
+const smsSchema = z.object({
+  type: z.enum(["INCOME", "EXPENSE"]),
+  amount: z.number().positive(),
+  title: z.string().min(1),
+  category: z.string(),
+  confidence: z.number().min(0).max(1),
+  bank: z.string().optional(),
+  smsBodies: z.array(z.string()).optional(), // Store original SMS bodies
+  date: z.string().optional()
+});
+
+const bulkSmsSchema = z.array(smsSchema);
+
 export const createExpense = async (req: Request, res: Response) => {
   try {
     const userId = req.userId!;
@@ -26,6 +40,61 @@ export const createExpense = async (req: Request, res: Response) => {
       userId
     });
     res.status(201).json(expense);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Create expense from single SMS
+export const createFromSMS = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const data = smsSchema.parse(req.body);
+    
+    const expense = await service.createExpense({
+      title: data.title,
+      amount: data.amount,
+      type: data.type,
+      category: data.category,
+      note: data.smsBodies ? data.smsBodies[0] : null,
+      date: data.date ? new Date(data.date) : undefined,
+      userId
+    });
+    
+    res.status(201).json({
+      success: true,
+      expense,
+      confidence: data.confidence,
+      bank: data.bank
+    });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message });
+  }
+};
+
+// Create expenses from bulk SMS
+export const createBulkFromSMS = async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const transactions = bulkSmsSchema.parse(req.body);
+    
+    const expenses = await service.createBulkExpenses(
+      transactions.map(t => ({
+        title: t.title,
+        amount: t.amount,
+        type: t.type,
+        category: t.category,
+        note: t.smsBodies ? t.smsBodies[0] : null,
+        date: t.date ? new Date(t.date) : undefined,
+        userId
+      }))
+    );
+    
+    res.status(201).json({
+      success: true,
+      count: expenses.length,
+      expenses
+    });
   } catch (err: any) {
     res.status(400).json({ error: err.message });
   }
@@ -68,14 +137,4 @@ export const getExpenseById = async (req: Request, res: Response) => {
     res.status(400).json({ error: err.message });
   }
 }
-// export const updateExpense = async (req: Request, res: Response) => {
-//   try {
-//     const userId = req.userId!;
-//     const id = Number(req.params.id);
-//     const data = req.body;
-//     const updated = await service.updateExpense(id, userId, data);
-//     res.json(updated);
-//   } catch (err: any) {
-//     res.status(400).json({ error: err.message });
-//   }
 // }

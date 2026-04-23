@@ -24,6 +24,22 @@ export const createExpense = async (data: {
   return expense;
 };
 
+// Create multiple expenses from SMS data
+export const createBulkExpenses = async (dataArray: Array<{
+  title: string;
+  amount: number;
+  type: "INCOME" | "EXPENSE";
+  category?: string;
+  note?: string | null;
+  date?: Date;
+  userId: number;
+}>) => {
+  const expenses = await Promise.all(
+    dataArray.map(data => createExpense(data))
+  );
+  return expenses;
+};
+
 export const getExpenses = async (userId: number, filters: any = {}) => {
   const where: any = { userId };
   if (filters.type) where.type = filters.type;
